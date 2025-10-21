@@ -1,0 +1,11 @@
+Debug/
+ipch/
+x64/
+ItsConverter.sdf
+ItsConverter.VC.db
+ItsConverter/Debug/
+ItsConverter/x64/
+.vs/
+ItsConverter/ItsConverteraps
+
+
