@@ -3291,7 +3291,9 @@ CString CSimpleReelmap::GetTextSapp3()
 
 
 	return sData;
+}
 
+void CSimpleReelmap::SetItsOrigin(int nCase)
+{
 
-	return sData;
 }

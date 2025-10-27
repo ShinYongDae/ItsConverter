@@ -287,6 +287,8 @@ class CSimpleReelmap : public CWnd
 	CString GetTextSapp3();
 	int GetItsDefCode(int nDefCode);
 
+	void SetItsOrigin(int nCase);
+
 public:
 	CSimpleReelmap(int nLayer, CString m_sPathInfo, CString sPathRmap, CString sPathYield, CString sPathMark, CWnd* pParent = NULL);
 	virtual ~CSimpleReelmap();
