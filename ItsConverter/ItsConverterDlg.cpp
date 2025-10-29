@@ -23,6 +23,11 @@ CItsConverterDlg::CItsConverterDlg(CWnd* pParent /*=NULL*/)
 
 	m_pDlgSetReelmapSapp = NULL;
 	m_pDlgSetItsOrigin = NULL;
+
+	m_nMachine = -1;
+	m_sModel = _T(""); m_sLot = _T(""); m_sLayer[0] = _T(""); 
+	m_sLayer[1] = _T(""); m_sProcessCode = _T(""), m_sItsCode = _T("");
+	m_nTestMode = -1;
 }
 
 CItsConverterDlg::~CItsConverterDlg()
@@ -52,6 +57,7 @@ BEGIN_MESSAGE_MAP(CItsConverterDlg, CDialog)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CItsConverterDlg::OnTcnSelchangeTab1)
 	ON_WM_SHOWWINDOW()
 	ON_WM_MOVE()
+	ON_CBN_SELCHANGE(IDC_COMBO_MACHINE, &CItsConverterDlg::OnSelchangeComboMachine)
 END_MESSAGE_MAP()
 
 
@@ -68,8 +74,9 @@ BOOL CItsConverterDlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	//GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_GRAYED | MF_BYCOMMAND);
-	this->SetWindowText(_T("ITS Data Converter (version: 1.0.0) ;  Update Date(2025,10,21)"));
+	this->SetWindowText(_T("ITS Data Converter (version: 1.0.0) ;  Update Date(2025,10,29)"));
 
+	Init();
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -179,7 +186,7 @@ void CItsConverterDlg::StringToChar(CString str, char* pCh) // char* returned mu
 void CItsConverterDlg::InitTab()	// Tab Control 초기화
 {
 	CString sTabCaption[2];
-	sTabCaption[0] = _T("Reelmap & SAPP");
+	sTabCaption[0] = _T("Reelmap && SAPP");
 	sTabCaption[1] = _T("ITS Origin case");
 
 	// Tab Control의 폰트 변경.
@@ -207,10 +214,10 @@ void CItsConverterDlg::InitTab()	// Tab Control 초기화
 	item.pszText = (LPWSTR)(LPCWSTR)sTabCaption[1];
 	m_TabCtrl.InsertItem(1, &item);
 
-	m_nCurItemID = 0;
-	m_TabCtrl.HighlightItem(m_nCurItemID, TRUE);
+	m_nCurTab = 0;
+	m_TabCtrl.HighlightItem(m_nCurTab, TRUE);
 
-	ShowDlg(m_nCurItemID);
+	ShowDlg(m_nCurTab);
 }
 
 void CItsConverterDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
@@ -219,11 +226,11 @@ void CItsConverterDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 
 	// 현재 설정된 SUB UNIT의 인덱스값(0기준)을 얻는다.
-	m_TabCtrl.HighlightItem(m_nCurItemID, FALSE);
+	m_TabCtrl.HighlightItem(m_nCurTab, FALSE);
 
-	m_nCurItemID = m_TabCtrl.GetCurSel();
-	m_TabCtrl.HighlightItem(m_nCurItemID, TRUE);
-	ShowDlg(m_nCurItemID);
+	m_nCurTab = m_TabCtrl.GetCurSel();
+	m_TabCtrl.HighlightItem(m_nCurTab, TRUE);
+	ShowDlg(m_nCurTab);
 }
 
 void CItsConverterDlg::ShowDlg(int nId)
@@ -360,4 +367,116 @@ void CItsConverterDlg::OnMove(int x, int y)
 
 	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
 	Refresh();
+}
+
+void CItsConverterDlg::SetRadio(int nIdx)
+{
+	m_nTestMode = nIdx;
+
+	CButton* Btn[3];
+	Btn[0] = (CButton*)GetDlgItem(IDC_RADIO8);
+	Btn[1] = (CButton*)GetDlgItem(IDC_RADIO9);
+	Btn[2] = (CButton*)GetDlgItem(IDC_RADIO10);
+
+	Btn[0]->SetCheck(FALSE);
+	Btn[1]->SetCheck(FALSE);
+	Btn[2]->SetCheck(FALSE);
+
+	switch (nIdx)
+	{
+	case 0:
+		Btn[0]->SetCheck(TRUE);
+		break;
+	case 1:
+		Btn[1]->SetCheck(TRUE);
+		break;
+	case 2:
+		Btn[2]->SetCheck(TRUE);
+		break;
+	default:
+		break;
+	}
+}
+
+void CItsConverterDlg::Init()
+{
+	InitTestMode();
+	InitComboMachine();
+}
+
+void CItsConverterDlg::InitTestMode()
+{
+	int nTestMode = m_stIni.LastJob.nTestMode;
+	if (nTestMode < 0) return;
+	SetRadio(nTestMode);
+}
+
+void CItsConverterDlg::InitComboMachine()
+{
+	if (!m_stIni.Machine) return;
+
+	int nTot = m_stIni.nTotalMachine;
+	if (nTot < 1) return;
+
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MACHINE);
+	CString sItem;
+	for (int i = 0; i < nTot; i++)
+	{
+		sItem = m_stIni.Machine[i].sName;
+		pCombo->InsertString(i, sItem);
+	}
+
+	m_nMachine = m_stIni.LastJob.nMachine;
+	pCombo->SetCurSel(m_nMachine);
+	ModifyModel();
+}
+
+void CItsConverterDlg::OnSelchangeComboMachine()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MACHINE);
+	int nIndex = pCombo->GetCurSel();
+	if (nIndex != LB_ERR)
+	{
+		m_nMachine = nIndex;
+		//pCombo->GetLBText(nIndex, m_sModel);
+		ModifyModel();
+	}
+}
+
+void CItsConverterDlg::ModifyModel()
+{
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MODEL);
+	pCombo->ResetContent();
+
+	CString Dir, sName;
+	Dir = m_stIni.Machine[m_nMachine].sPath + _T("MarkedFile\\");
+
+	TCHAR FN[100];
+	_stprintf(FN, _T("%s*.*"), Dir);
+
+	pCombo->Dir(0x8010, FN);
+
+	//"[..]"를 제거 
+	int nIndex = pCombo->FindStringExact(-1, _T("[..]"));
+	if (nIndex > -1)	pCombo->DeleteString(nIndex);
+	int nCount = pCombo->GetCount();
+
+	CString strBuf, strBuf2;
+	int i;
+	for (i = nCount; i > 0; i--)
+	{
+		int nCurr = i - 1;
+		pCombo->GetLBText(nCurr, strBuf);
+		if (strBuf.GetLength() < 3)
+		{
+			pCombo->DeleteString(nCurr);
+			continue;
+		}
+
+		// 기종이름에서 "[]"를 제거 
+		strBuf2 = strBuf.Mid(1, strBuf.GetLength() - 2);
+		pCombo->DeleteString(nCurr);
+		pCombo->InsertString(nCurr, strBuf2);
+	}
 }
