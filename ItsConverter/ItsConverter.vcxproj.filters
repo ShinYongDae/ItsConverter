@@ -51,6 +51,12 @@
     <ClInclude Include="SimpleCamMaster.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="DlgSetReelmapSapp.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgSetItsOrigin.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ItsConverter.cpp">
@@ -78,6 +84,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Pcr.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgSetReelmapSapp.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgSetItsOrigin.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -183,6 +183,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DlgSetItsOrigin.h" />
+    <ClInclude Include="DlgSetReelmapSapp.h" />
     <ClInclude Include="ItsConverter.h" />
     <ClInclude Include="ItsConverterDlg.h" />
     <ClInclude Include="Pcr.h" />
@@ -196,6 +198,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DlgSetItsOrigin.cpp" />
+    <ClCompile Include="DlgSetReelmapSapp.cpp" />
     <ClCompile Include="ItsConverter.cpp" />
     <ClCompile Include="ItsConverterDlg.cpp" />
     <ClCompile Include="Pcr.cpp" />
@@ -223,4 +227,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="ItsConverter.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>
