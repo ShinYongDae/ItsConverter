@@ -254,6 +254,7 @@ public:
 
 	int GetCurTab();
 	CWnd* GetCurDlg();
+	int MsgBox(CString sMsg, int nType = MB_OK);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.

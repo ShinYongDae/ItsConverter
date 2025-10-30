@@ -15,11 +15,13 @@
 
 IMPLEMENT_DYNAMIC(CMsgBox, CDialog)
 
-CMsgBox::CMsgBox(CString sMsg, CWnd* pParent /*=NULL*/)
+CMsgBox::CMsgBox(CString sMsg, int nType, CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_MSGBOX, pParent)
 {
 	m_sMsg = sMsg;
+	m_nType = nType;
 	m_pParent = pParent;
+	m_nRtn = IDOK;
 }
 
 CMsgBox::~CMsgBox()
@@ -49,7 +51,7 @@ BOOL CMsgBox::OnInitDialog()
 	int nTab = ((CItsConverterDlg*)m_pParent)->GetCurTab();
 	CWnd* pWnd = ((CItsConverterDlg*)m_pParent)->GetCurDlg();
 	if(pWnd)
-		pWnd->MessageBox(m_sMsg);
+		m_nRtn = pWnd->MessageBox(m_sMsg, 0, m_nType);
 
 	OnOK();
 	//SetTimer(0, 100, NULL);
@@ -72,4 +74,9 @@ void CMsgBox::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	CDialog::OnTimer(nIDEvent);
+}
+
+int CMsgBox::GetRtn()
+{
+	return m_nRtn;
 }

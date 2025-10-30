@@ -363,6 +363,14 @@ void CItsConverterDlg::RefreshDlg()
 	}
 }
 
+int CItsConverterDlg::MsgBox(CString sMsg, int nType)
+{
+	CMsgBox msg(sMsg, nType, this);
+	msg.DoModal();
+
+	return msg.GetRtn();
+}
+
 BOOL CItsConverterDlg::CheckItsOrigin()
 {
 	int nItsOriginCase = GetItsOriginCase(m_sModel);
@@ -370,8 +378,7 @@ BOOL CItsConverterDlg::CheckItsOrigin()
 	if (nItsOriginCase != nCurrOriginCase && nItsOriginCase > -1)
 	{
 		CString sMsg = _T("현재 모델의 ITS파일은 원본 Origin과 다릅니다.\r\n원본 Origin기준으로 ITS파일을 재생성하세요.");
-		CMsgBox msg(sMsg, this);
-		msg.DoModal();
+		int nRtn = MsgBox(sMsg, MB_OK);
 		//HideAllDlg();
 		//AfxMessageBox(sMsg);
 		////this->MessageBox(sMsg, _T("주의"), MB_OK | MB_ICONQUESTION);
