@@ -58,6 +58,7 @@ BEGIN_MESSAGE_MAP(CItsConverterDlg, CDialog)
 	ON_WM_SHOWWINDOW()
 	ON_WM_MOVE()
 	ON_CBN_SELCHANGE(IDC_COMBO_MACHINE, &CItsConverterDlg::OnSelchangeComboMachine)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -77,6 +78,8 @@ BOOL CItsConverterDlg::OnInitDialog()
 	this->SetWindowText(_T("ITS Data Converter (version: 1.0.0) ;  Update Date(2025,10,29)"));
 
 	Init();
+
+	SetTimer(0, 100, NULL);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -360,6 +363,27 @@ void CItsConverterDlg::RefreshDlg()
 	}
 }
 
+BOOL CItsConverterDlg::CheckItsOrigin()
+{
+	int nItsOriginCase = GetItsOriginCase(m_sModel);
+	int nCurrOriginCase = GetCurrOriginCase(m_sModel);
+	if (nItsOriginCase != nCurrOriginCase && nItsOriginCase > -1)
+	{
+		CString sMsg = _T("현재 모델의 ITS파일은 원본 Origin과 다릅니다.\r\n원본 Origin기준으로 ITS파일을 재생성하세요.");
+		CMsgBox msg(sMsg, this);
+		msg.DoModal();
+		//HideAllDlg();
+		//AfxMessageBox(sMsg);
+		////this->MessageBox(sMsg, _T("주의"), MB_OK | MB_ICONQUESTION);
+		//ShowDlg(m_nCurTab);
+		return FALSE;
+	}
+
+	if (nItsOriginCase < 0 || nCurrOriginCase < 0)
+		return FALSE;
+
+	return TRUE;
+}
 
 void CItsConverterDlg::OnMove(int x, int y)
 {
@@ -369,7 +393,7 @@ void CItsConverterDlg::OnMove(int x, int y)
 	Refresh();
 }
 
-void CItsConverterDlg::SetRadio(int nIdx)
+void CItsConverterDlg::SetRadioTestMode(int nIdx)
 {
 	m_nTestMode = nIdx;
 
@@ -400,15 +424,26 @@ void CItsConverterDlg::SetRadio(int nIdx)
 
 void CItsConverterDlg::Init()
 {
+	InitModel();
 	InitTestMode();
 	InitComboMachine();
+}
+
+void CItsConverterDlg::InitModel()
+{
+	m_sModel = m_stIni.LastJob.sModel;
+	m_sLot = m_stIni.LastJob.sLot;
+	m_sLayer[0] = m_stIni.LastJob.sLayerUp;
+	m_sLayer[1] = m_stIni.LastJob.sLayerDn;
+	m_sProcessCode = m_stIni.LastJob.sProcessNum;
+	m_sItsCode = m_stIni.LastJob.sItsCode;
 }
 
 void CItsConverterDlg::InitTestMode()
 {
 	int nTestMode = m_stIni.LastJob.nTestMode;
 	if (nTestMode < 0) return;
-	SetRadio(nTestMode);
+	SetRadioTestMode(nTestMode);
 }
 
 void CItsConverterDlg::InitComboMachine()
@@ -479,4 +514,107 @@ void CItsConverterDlg::ModifyModel()
 		pCombo->DeleteString(nCurr);
 		pCombo->InsertString(nCurr, strBuf2);
 	}
+}
+
+int CItsConverterDlg::GetCurrOriginCase(CString sModel)
+{
+	CString sPathItsInfoFile;
+	sPathItsInfoFile.Format(_T("%sMarkedFile\\%s\\ItsInfo.ini"), m_stIni.Machine[m_nMachine].sPath, sModel);
+
+	int nDataOrigin = -1; // Not Found
+	TCHAR szData[MAX_PATH];
+	if (0 < ::GetPrivateProfileString(_T("Info"), _T("DataOrigin"), NULL, szData, sizeof(szData), sPathItsInfoFile))
+		nDataOrigin = _ttoi(szData);
+
+	return nDataOrigin;
+}
+
+int CItsConverterDlg::GetItsOriginCase(CString sModel)
+{
+	CString sPathItsOriginList = m_stIni.sPathItsOriginList;
+	CString sListModel = _T("");
+	int nCase = 0;
+
+	TCHAR szData[MAX_PATH];
+	TCHAR *token;
+	TCHAR sep[] = { _T(",;\r\n\t") };
+
+	int nModelIdx, nTotalModel;
+	CString sModelIdx = _T("");
+
+	if (0 < ::GetPrivateProfileString(_T("Info"), _T("Total_Models"), NULL, szData, sizeof(szData), sPathItsOriginList))
+		nTotalModel = _ttoi(szData);
+	else
+		nTotalModel = 0;
+
+	for (nModelIdx = 0; nModelIdx < nTotalModel; nModelIdx++)
+	{
+		sModelIdx.Format(_T("%d"), nModelIdx);
+
+		if (0 < ::GetPrivateProfileString(_T("Model"), sModelIdx, NULL, szData, sizeof(szData), sPathItsOriginList))
+		{
+			token = _tcstok(szData, sep);
+			sListModel = CString(token);
+			token = _tcstok(NULL, sep);
+			nCase = _ttoi(token);
+		}
+		else
+			sListModel = _T("");
+
+		if (sListModel == sModel)
+			return nCase;
+	}
+
+	return -1; // Not Found
+}
+
+void CItsConverterDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	KillTimer(nIDEvent);
+	switch (nIDEvent)
+	{
+	case 0:
+		CheckItsOrigin();
+		break;
+	default:
+		break;
+	}
+
+	CDialog::OnTimer(nIDEvent);
+}
+
+
+BOOL CItsConverterDlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_RETURN || pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+	}
+
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
+int CItsConverterDlg::GetCurTab()
+{
+	return m_nCurTab;
+}
+
+CWnd* CItsConverterDlg::GetCurDlg()
+{
+	switch (m_nCurTab)
+	{
+	case 0:
+		return m_pDlgSetReelmapSapp;
+	case 1:
+		return m_pDlgSetItsOrigin;
+	default:
+		return NULL;
+	}
+	
+	return NULL;
 }

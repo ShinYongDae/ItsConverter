@@ -57,6 +57,9 @@
     <ClInclude Include="DlgSetItsOrigin.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="MsgBox.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ItsConverter.cpp">
@@ -90,6 +93,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="DlgSetItsOrigin.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MsgBox.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

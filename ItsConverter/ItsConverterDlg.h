@@ -10,7 +10,7 @@
 #include "SimpleReelmap.h"
 #include "DlgSetReelmapSapp.h"
 #include "DlgSetItsOrigin.h"
-
+#include "MsgBox.h"
 
 #define INI_PATH _T("C:\\R2RSet\\ItsConverter.ini")
 
@@ -42,7 +42,7 @@ struct stMachine
 
 struct stIni
 {
-	CString sPathCamSpecDir;
+	CString sPathCamSpecDir, sPathItsOriginList;
 	stLastJob LastJob;
 	int nTotalMachine;
 	stMachine* Machine;
@@ -56,6 +56,7 @@ struct stIni
 	stIni()
 	{
 		sPathCamSpecDir = _T("");
+		sPathItsOriginList = _T("");
 		nTotalMachine = 0;
 		Machine = NULL;
 
@@ -86,6 +87,11 @@ struct stIni
 			sPathCamSpecDir = CString(szData);
 		else
 			sPathCamSpecDir = _T("");
+
+		if (0 < ::GetPrivateProfileString(_T("Info"), _T("ItsOriginList"), NULL, szData, sizeof(szData), INI_PATH))
+			sPathItsOriginList = CString(szData);
+		else
+			sPathItsOriginList = _T("");
 
 		if (0 < ::GetPrivateProfileString(_T("Machine Info"), _T("Total"), NULL, szData, sizeof(szData), INI_PATH))
 			nTotalMachine = _ttoi(szData);
@@ -203,16 +209,21 @@ class CItsConverterDlg : public CDialog
 	void StringToChar(CString str, char* pCh); // char* returned must be deleted... 
 	void Refresh();
 	void RefreshDlg();
-	void SetRadio(int nIdx);
+	void SetRadioTestMode(int nIdx);
 
 	int m_nMachine;
 	CString m_sModel, m_sLot, m_sLayer[2], m_sProcessCode, m_sItsCode;
 	int m_nTestMode;
 
 	void Init();
+	void InitModel();
 	void InitTestMode();
 	void InitComboMachine();
 	void ModifyModel();
+
+	BOOL CheckItsOrigin();
+	int GetItsOriginCase(CString sModel);
+	int GetCurrOriginCase(CString sModel);
 
 // 생성입니다.
 public:
@@ -241,6 +252,8 @@ public:
 	void DrawPnlDef(int nSerial);
 	void DrawMarkedPcs(int nSerial);
 
+	int GetCurTab();
+	CWnd* GetCurDlg();
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
@@ -261,4 +274,6 @@ public:
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnSelchangeComboMachine();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

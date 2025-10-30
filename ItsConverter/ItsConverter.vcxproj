@@ -187,6 +187,7 @@
     <ClInclude Include="DlgSetReelmapSapp.h" />
     <ClInclude Include="ItsConverter.h" />
     <ClInclude Include="ItsConverterDlg.h" />
+    <ClInclude Include="MsgBox.h" />
     <ClInclude Include="Pcr.h" />
     <ClInclude Include="PcrMark.h" />
     <ClInclude Include="PcrYield.h" />
@@ -202,6 +203,7 @@
     <ClCompile Include="DlgSetReelmapSapp.cpp" />
     <ClCompile Include="ItsConverter.cpp" />
     <ClCompile Include="ItsConverterDlg.cpp" />
+    <ClCompile Include="MsgBox.cpp" />
     <ClCompile Include="Pcr.cpp" />
     <ClCompile Include="PcrMark.cpp" />
     <ClCompile Include="PcrYield.cpp" />
