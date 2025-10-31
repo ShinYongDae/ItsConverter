@@ -25,8 +25,8 @@ CItsConverterDlg::CItsConverterDlg(CWnd* pParent /*=NULL*/)
 	m_pDlgSetItsOrigin = NULL;
 
 	m_nMachine = -1; m_nModel = -1; m_nLot = -1; m_nLayer = -1;
-	m_sModel = _T(""); m_sLot = _T(""); m_sLayer[0] = _T(""); 
-	m_sLayer[1] = _T(""); m_sProcessCode = _T(""), m_sItsCode = _T("");
+	m_sModel = _T(""); m_sLot = _T(""); m_sLayerSel = _T(""); 
+	m_sLayer[0] = _T(""); m_sLayer[1] = _T(""); m_sProcessCode = _T(""), m_sItsCode = _T("");
 	m_nTestMode = MODE_NONE;
 }
 
@@ -63,6 +63,9 @@ BEGIN_MESSAGE_MAP(CItsConverterDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO8, &CItsConverterDlg::OnBnClickedRadio8)
 	ON_BN_CLICKED(IDC_RADIO9, &CItsConverterDlg::OnBnClickedRadio9)
 	ON_BN_CLICKED(IDC_RADIO10, &CItsConverterDlg::OnBnClickedRadio10)
+	ON_CBN_SELCHANGE(IDC_COMBO_MODEL, &CItsConverterDlg::OnSelchangeComboModel)
+	ON_LBN_SELCHANGE(IDC_LIST_LAYER, &CItsConverterDlg::OnSelchangeListLayer)
+	ON_LBN_SELCHANGE(IDC_LIST_LOT, &CItsConverterDlg::OnSelchangeListLot)
 END_MESSAGE_MAP()
 
 
@@ -490,7 +493,7 @@ void CItsConverterDlg::InitListLot()
 void CItsConverterDlg::InitListLayer()
 {
 	ModifyLayer();
-	m_nLayer = GetIdxListLayer(m_sLayer[0]);
+	m_nLayer = GetIdxListLayer(m_sLayerSel);
 	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
 	if (m_nLayer > -1)	pList->SetCurSel(m_nLayer);
 }
@@ -550,20 +553,45 @@ int CItsConverterDlg::GetIdxListLayer(CString sLayer)
 	return nIdx;
 }
 
-void CItsConverterDlg::OnSelchangeComboMachine()
+void CItsConverterDlg::SetEmptyModel()
 {
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MACHINE);
-	int nIndex = pCombo->GetCurSel();
-	if (nIndex != LB_ERR)
-	{
-		m_nMachine = nIndex;
-		ModifyModel();
-	}
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MODEL);
+	pCombo->ResetContent();
+	m_nModel = -1;
+	m_sModel = _T("");
+
+	SetEmptyLot();
+	SetEmptyLayer();
+}
+
+void CItsConverterDlg::SetEmptyLot()
+{
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LOT);
+	pList->ResetContent();
+	m_nLot = -1;
+	m_sLot = _T("");
+
+	SetEmptyLayer();
+}
+
+void CItsConverterDlg::SetEmptyLayer()
+{
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
+	pList->ResetContent();
+	m_nLayer = -1;
+	m_sLayerSel = _T("");
+	m_sLayer[0] = _T("");
+	m_sLayer[1] = _T("");
 }
 
 void CItsConverterDlg::ModifyModel()
 {
+	if (m_nMachine < 0) 
+	{
+		SetEmptyModel();
+		return;
+	}
+
 	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MODEL);
 	pCombo->ResetContent();
 
@@ -600,6 +628,12 @@ void CItsConverterDlg::ModifyModel()
 
 void CItsConverterDlg::ModifyLot()
 {
+	if (m_nMachine < 0 || m_sModel.IsEmpty())
+	{
+		SetEmptyLot();
+		return;
+	}
+
 	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LOT);
 	pList->ResetContent();
 
@@ -638,6 +672,12 @@ void CItsConverterDlg::ModifyLot()
 
 void CItsConverterDlg::ModifyLayer()
 {
+	if (m_nMachine < 0 || m_sModel.IsEmpty() || m_sLot.IsEmpty())
+	{
+		SetEmptyLayer();
+		return;
+	}
+
 	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
 	pList->ResetContent();
 
@@ -742,7 +782,6 @@ void CItsConverterDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialog::OnTimer(nIDEvent);
 }
 
-
 BOOL CItsConverterDlg::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
@@ -794,6 +833,7 @@ void CItsConverterDlg::LoadInfo()
 	m_nMachine = m_stIni.LastJob.nMachine;
 	m_sModel = m_stIni.LastJob.sModel;
 	m_sLot = m_stIni.LastJob.sLot;
+	m_sLayerSel = m_stIni.LastJob.sLayer;
 	m_sLayer[0] = m_stIni.LastJob.sLayerUp;
 	m_sLayer[1] = m_stIni.LastJob.sLayerDn;
 	m_sProcessCode = m_stIni.LastJob.sProcessNum;
@@ -806,6 +846,7 @@ void CItsConverterDlg::SaveInfo()
 	m_stIni.LastJob.nMachine = m_nMachine;
 	m_stIni.LastJob.sModel = m_sModel;
 	m_stIni.LastJob.sLot = m_sLot;
+	m_stIni.LastJob.sLayer = m_sLayerSel;
 	m_stIni.LastJob.sLayerUp = m_sLayer[0];
 	m_stIni.LastJob.sLayerDn = m_sLayer[1];
 	m_stIni.LastJob.sProcessNum = m_sProcessCode;
@@ -835,3 +876,103 @@ void CItsConverterDlg::OnBnClickedRadio10()
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	SetRadioTestMode(MODE_OUTER);
 }
+
+void CItsConverterDlg::ResetModel()
+{
+	m_nModel = -1; m_sModel = _T("");
+	ModifyModel();
+	ResetLot();
+	ResetLayer();
+	ResetTestMode();
+	ResetProcessCode();
+	ResetItsCode();
+}
+
+void CItsConverterDlg::ResetLot()
+{
+	m_nLot = -1; m_sLot = _T("");
+	GetDlgItem(IDC_EDIT_LOT)->SetWindowText(m_sLot);
+	ModifyLot();
+	ResetLayer();
+	ResetTestMode();
+	ResetProcessCode();
+	ResetItsCode();
+}
+
+void CItsConverterDlg::ResetLayer()
+{
+	m_nLayer = -1; m_sLayerSel = _T(""); m_sLayer[0] = _T(""); m_sLayer[1] = _T("");
+	ModifyLayer();
+	ResetTestMode();
+	ResetProcessCode();
+	ResetItsCode();
+}
+
+void CItsConverterDlg::ResetProcessCode()
+{
+	m_sProcessCode = _T("");
+	GetDlgItem(IDC_EDIT_PROC)->SetWindowText(m_sProcessCode);
+}
+
+void CItsConverterDlg::ResetItsCode()
+{
+	m_sItsCode = _T("");
+	GetDlgItem(IDC_EDIT_ITS)->SetWindowText(m_sItsCode);
+}
+
+void CItsConverterDlg::ResetTestMode()
+{
+	SetRadioTestMode(MODE_NONE);
+}
+
+void CItsConverterDlg::OnSelchangeComboMachine()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MACHINE);
+	int nIndex = pCombo->GetCurSel();
+	if (nIndex != LB_ERR)
+	{
+		m_nMachine = nIndex;
+		ResetModel();
+	}
+}
+
+void CItsConverterDlg::OnSelchangeComboModel()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MODEL);
+	int nIndex = pCombo->GetCurSel();
+	if (nIndex != LB_ERR)
+	{
+		m_nModel = nIndex;
+		pCombo->GetLBText(m_nModel, m_sModel);
+		ResetLot();
+	}
+}
+
+void CItsConverterDlg::OnSelchangeListLot()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LOT);
+	int nIndex = pList->GetCurSel();
+	if (nIndex != LB_ERR)
+	{
+		m_nLot = nIndex;
+		pList->GetText(m_nLot, m_sLot);
+		ResetLayer();
+	}
+}
+
+void CItsConverterDlg::OnSelchangeListLayer()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
+	int nIndex = pList->GetCurSel();
+	if (nIndex != LB_ERR)
+	{
+		m_nLayer = nIndex;
+		pList->GetText(m_nLayer, m_sLayerSel);
+		// LoadPcr
+	}
+}
+

@@ -20,14 +20,15 @@ struct stLastJob
 {
 	int nMachine;
 	CString sProcessNum, sItsCode;
-	CString sModel, sLot, sLayerUp, sLayerDn;
+	CString sModel, sLot, sLayer, sLayerUp, sLayerDn;
 	int nTestMode;
 
 	stLastJob()
 	{
 		nMachine = -1;
-		sProcessNum = _T("");	sItsCode = _T("");
-		sModel = _T("");	sLot = _T("");	sLayerUp = _T("");	sLayerDn = _T("");
+		sProcessNum = _T(""); sItsCode = _T("");
+		sModel = _T(""); sLot = _T(""); sLayer = _T("");	
+		sLayerUp = _T(""); sLayerDn = _T("");
 		nTestMode = MODE_NONE;
 	}
 };
@@ -136,6 +137,11 @@ struct stIni
 		else
 			LastJob.sLot = _T("");
 
+		if (0 < ::GetPrivateProfileString(_T("Last Job"), _T("Layer Name"), NULL, szData, sizeof(szData), INI_PATH))
+			LastJob.sLayer = CString(szData);
+		else
+			LastJob.sLayer = _T("");
+
 		if (0 < ::GetPrivateProfileString(_T("Last Job"), _T("LayerUp Name"), NULL, szData, sizeof(szData), INI_PATH))
 			LastJob.sLayerUp = CString(szData);
 		else
@@ -172,6 +178,9 @@ struct stIni
 
 		sData = LastJob.sLot;
 		::WritePrivateProfileString(_T("Last Job"), _T("Lot No"), sData, INI_PATH);
+
+		sData = LastJob.sLayer;
+		::WritePrivateProfileString(_T("Last Job"), _T("Layer Name"), sData, INI_PATH);
 
 		sData = LastJob.sLayerUp;
 		::WritePrivateProfileString(_T("Last Job"), _T("LayerUp Name"), sData, INI_PATH);
@@ -214,7 +223,7 @@ class CItsConverterDlg : public CDialog
 	void SetRadioTestMode(int nIdx);
 
 	int m_nMachine, m_nModel, m_nLot, m_nLayer;
-	CString m_sModel, m_sLot, m_sLayer[2], m_sProcessCode, m_sItsCode;
+	CString m_sModel, m_sLot, m_sLayer[2], m_sLayerSel, m_sProcessCode, m_sItsCode;
 	int m_nTestMode;
 
 	void Init();
@@ -233,6 +242,17 @@ class CItsConverterDlg : public CDialog
 	void ModifyModel();
 	void ModifyLot();
 	void ModifyLayer();
+
+	void ResetModel();
+	void ResetLot();
+	void ResetLayer();
+	void ResetProcessCode();
+	void ResetItsCode();
+	void ResetTestMode();
+
+	void SetEmptyModel();
+	void SetEmptyLot();
+	void SetEmptyLayer();
 
 	BOOL CheckItsOrigin();
 	int GetItsOriginCase(CString sModel);
@@ -297,4 +317,7 @@ public:
 	afx_msg void OnBnClickedRadio8();
 	afx_msg void OnBnClickedRadio9();
 	afx_msg void OnBnClickedRadio10();
+	afx_msg void OnSelchangeComboModel();
+	afx_msg void OnSelchangeListLayer();
+	afx_msg void OnSelchangeListLot();
 };
