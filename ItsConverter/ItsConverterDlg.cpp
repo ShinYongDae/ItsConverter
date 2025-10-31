@@ -24,10 +24,10 @@ CItsConverterDlg::CItsConverterDlg(CWnd* pParent /*=NULL*/)
 	m_pDlgSetReelmapSapp = NULL;
 	m_pDlgSetItsOrigin = NULL;
 
-	m_nMachine = -1;
+	m_nMachine = -1; m_nModel = -1; m_nLot = -1; m_nLayer = -1;
 	m_sModel = _T(""); m_sLot = _T(""); m_sLayer[0] = _T(""); 
 	m_sLayer[1] = _T(""); m_sProcessCode = _T(""), m_sItsCode = _T("");
-	m_nTestMode = -1;
+	m_nTestMode = MODE_NONE;
 }
 
 CItsConverterDlg::~CItsConverterDlg()
@@ -59,6 +59,10 @@ BEGIN_MESSAGE_MAP(CItsConverterDlg, CDialog)
 	ON_WM_MOVE()
 	ON_CBN_SELCHANGE(IDC_COMBO_MACHINE, &CItsConverterDlg::OnSelchangeComboMachine)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_SAVE, &CItsConverterDlg::OnBnClickedButtonSave)
+	ON_BN_CLICKED(IDC_RADIO8, &CItsConverterDlg::OnBnClickedRadio8)
+	ON_BN_CLICKED(IDC_RADIO9, &CItsConverterDlg::OnBnClickedRadio9)
+	ON_BN_CLICKED(IDC_RADIO10, &CItsConverterDlg::OnBnClickedRadio10)
 END_MESSAGE_MAP()
 
 
@@ -172,7 +176,7 @@ void CItsConverterDlg::DrawMarkedPcs(int nSerial)
 void CItsConverterDlg::StringToChar(CString str, char* pCh) // char* returned must be deleted... 
 {
 	wchar_t*	wszStr;
-	int				nLenth;
+	int			nLenth;
 
 	USES_CONVERSION;
 	//1. CString to wchar_t* conversion
@@ -367,7 +371,6 @@ int CItsConverterDlg::MsgBox(CString sMsg, int nType)
 {
 	CMsgBox msg(sMsg, nType, this);
 	msg.DoModal();
-
 	return msg.GetRtn();
 }
 
@@ -431,26 +434,21 @@ void CItsConverterDlg::SetRadioTestMode(int nIdx)
 
 void CItsConverterDlg::Init()
 {
-	InitModel();
+	LoadInfo();
+
 	InitTestMode();
 	InitComboMachine();
-}
-
-void CItsConverterDlg::InitModel()
-{
-	m_sModel = m_stIni.LastJob.sModel;
-	m_sLot = m_stIni.LastJob.sLot;
-	m_sLayer[0] = m_stIni.LastJob.sLayerUp;
-	m_sLayer[1] = m_stIni.LastJob.sLayerDn;
-	m_sProcessCode = m_stIni.LastJob.sProcessNum;
-	m_sItsCode = m_stIni.LastJob.sItsCode;
+	InitComboModel();
+	InitListLot();
+	InitListLayer();
+	InitProcessCode();
+	InitItsCode();
 }
 
 void CItsConverterDlg::InitTestMode()
 {
-	int nTestMode = m_stIni.LastJob.nTestMode;
-	if (nTestMode < 0) return;
-	SetRadioTestMode(nTestMode);
+	if (m_nTestMode < 0) return;
+	SetRadioTestMode(m_nTestMode);
 }
 
 void CItsConverterDlg::InitComboMachine()
@@ -468,9 +466,88 @@ void CItsConverterDlg::InitComboMachine()
 		pCombo->InsertString(i, sItem);
 	}
 
-	m_nMachine = m_stIni.LastJob.nMachine;
-	pCombo->SetCurSel(m_nMachine);
+	if (m_nMachine > -1)	pCombo->SetCurSel(m_nMachine);
+}
+
+void CItsConverterDlg::InitComboModel()
+{
 	ModifyModel();
+	m_nModel = GetIdxComboModel(m_sModel);
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MODEL);
+	pCombo->SetCurSel(m_nModel);
+}
+
+void CItsConverterDlg::InitListLot()
+{
+	GetDlgItem(IDC_EDIT_LOT)->SetWindowText(m_sLot);
+
+	ModifyLot();
+	m_nLot = GetIdxListLot(m_sLot);
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LOT);
+	if (m_nLot > -1)	pList->SetCurSel(m_nLot);
+}
+
+void CItsConverterDlg::InitListLayer()
+{
+	ModifyLayer();
+	m_nLayer = GetIdxListLayer(m_sLayer[0]);
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
+	if (m_nLayer > -1)	pList->SetCurSel(m_nLayer);
+}
+
+void CItsConverterDlg::InitProcessCode()
+{
+	GetDlgItem(IDC_EDIT_PROC)->SetWindowText(m_sProcessCode);
+}
+
+void CItsConverterDlg::InitItsCode()
+{
+	GetDlgItem(IDC_EDIT_ITS)->SetWindowText(m_sItsCode);
+}
+
+int CItsConverterDlg::GetIdxComboModel(CString sModel)
+{
+	int nIdx = -1;
+	CComboBox* pCombo = (CComboBox*)GetDlgItem(IDC_COMBO_MODEL);
+	int nCount = pCombo->GetCount();
+	CString sLine = _T("");
+	for (int i = 0; i < nCount; i++)
+	{
+		pCombo->GetLBText(i, sLine);
+		if (sLine == sModel)
+			return i;
+	}
+	return nIdx;
+}
+
+int CItsConverterDlg::GetIdxListLot(CString sLot)
+{
+	int nIdx = -1;
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LOT);
+	int nCount = pList->GetCount();
+	CString sLine = _T("");
+	for (int i = 0; i < nCount; i++)
+	{
+		pList->GetText(i, sLine);
+		if (sLine == sLot)
+			return i;	
+	}
+	return nIdx;
+}
+
+int CItsConverterDlg::GetIdxListLayer(CString sLayer)
+{
+	int nIdx = -1;
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
+	int nCount = pList->GetCount();
+	CString sLine = _T("");
+	for (int i = 0; i < nCount; i++)
+	{
+		pList->GetText(i, sLine);
+		if (sLine == sLayer)
+			return i;
+	}
+	return nIdx;
 }
 
 void CItsConverterDlg::OnSelchangeComboMachine()
@@ -481,7 +558,6 @@ void CItsConverterDlg::OnSelchangeComboMachine()
 	if (nIndex != LB_ERR)
 	{
 		m_nMachine = nIndex;
-		//pCombo->GetLBText(nIndex, m_sModel);
 		ModifyModel();
 	}
 }
@@ -492,11 +568,10 @@ void CItsConverterDlg::ModifyModel()
 	pCombo->ResetContent();
 
 	CString Dir, sName;
-	Dir = m_stIni.Machine[m_nMachine].sPath + _T("MarkedFile\\");
+	Dir = m_stIni.Machine[m_nMachine].sPath + _T("MarkedFile");
 
 	TCHAR FN[100];
-	_stprintf(FN, _T("%s*.*"), Dir);
-
+	_stprintf(FN, _T("%s\\*.*"), Dir);
 	pCombo->Dir(0x8010, FN);
 
 	//"[..]"를 제거 
@@ -520,6 +595,82 @@ void CItsConverterDlg::ModifyModel()
 		strBuf2 = strBuf.Mid(1, strBuf.GetLength() - 2);
 		pCombo->DeleteString(nCurr);
 		pCombo->InsertString(nCurr, strBuf2);
+	}
+}
+
+void CItsConverterDlg::ModifyLot()
+{
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LOT);
+	pList->ResetContent();
+
+	CString Dir, strFileName;
+	Dir = m_stIni.Machine[m_nMachine].sPath + _T("MarkedFile\\") + m_sModel;
+
+	TCHAR FN[100];
+	_stprintf(FN, _T("%s\\*.*"), Dir);
+	pList->Dir(0x8010, FN);
+
+	//"[..]"를 제거 
+	pList->DeleteString(0);
+	int nIndex = pList->FindStringExact(-1, _T("[..]"));
+	if (nIndex > -1)	pList->DeleteString(nIndex);
+	int nCount = pList->GetCount();
+
+	CString strBuf, strBuf2;
+	int i;
+	for (i = nCount; i > 0; i--)
+	{
+		int nCurr = i - 1;
+		pList->GetText(nCurr, strBuf);
+
+		if (strBuf.GetLength() < 3)
+		{
+			pList->DeleteString(nCurr);
+			continue;
+		}
+
+		// 기종이름에서 "[]"를 제거 
+		CString strBuf2 = strBuf.Mid(1, strBuf.GetLength() - 2);
+		pList->DeleteString(nCurr);
+		pList->InsertString(nCurr, strBuf2);
+	}
+}
+
+void CItsConverterDlg::ModifyLayer()
+{
+	CListBox* pList = (CListBox*)GetDlgItem(IDC_LIST_LAYER);
+	pList->ResetContent();
+
+	CString Dir, strFileName;
+	Dir = m_stIni.Machine[m_nMachine].sPath + _T("MarkedFile\\") + m_sModel + _T("\\") + m_sLot;
+
+	TCHAR FN[100];
+	_stprintf(FN, _T("%s\\*.*"), Dir);
+	pList->Dir(0x8010, FN);
+
+	//"[..]"를 제거 
+	pList->DeleteString(0);
+	int nIndex = pList->FindStringExact(-1, _T("[..]"));
+	if (nIndex > -1)	pList->DeleteString(nIndex);
+	int nCount = pList->GetCount();
+
+	CString strBuf, strBuf2;
+	int i;
+	for (i = nCount; i > 0; i--)
+	{
+		int nCurr = i - 1;
+		pList->GetText(nCurr, strBuf);
+
+		if (strBuf.GetLength() < 3)
+		{
+			pList->DeleteString(nCurr);
+			continue;
+		}
+
+		// 기종이름에서 "[]"를 제거 
+		CString strBuf2 = strBuf.Mid(1, strBuf.GetLength() - 2);
+		pList->DeleteString(nCurr);
+		pList->InsertString(nCurr, strBuf2);
 	}
 }
 
@@ -624,4 +775,63 @@ CWnd* CItsConverterDlg::GetCurDlg()
 	}
 	
 	return NULL;
+}
+
+void CItsConverterDlg::OnBnClickedButtonSave()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CString sMsg = _T("현재 모델의 작업 내용을 저장하시겠습니까?");
+	int nRtn = MsgBox(sMsg, MB_YESNO);
+
+	if (IDYES == nRtn)
+	{
+		SaveInfo();
+	}
+}
+
+void CItsConverterDlg::LoadInfo()
+{
+	m_nMachine = m_stIni.LastJob.nMachine;
+	m_sModel = m_stIni.LastJob.sModel;
+	m_sLot = m_stIni.LastJob.sLot;
+	m_sLayer[0] = m_stIni.LastJob.sLayerUp;
+	m_sLayer[1] = m_stIni.LastJob.sLayerDn;
+	m_sProcessCode = m_stIni.LastJob.sProcessNum;
+	m_sItsCode = m_stIni.LastJob.sItsCode;
+	m_nTestMode = m_stIni.LastJob.nTestMode;
+}
+
+void CItsConverterDlg::SaveInfo()
+{
+	m_stIni.LastJob.nMachine = m_nMachine;
+	m_stIni.LastJob.sModel = m_sModel;
+	m_stIni.LastJob.sLot = m_sLot;
+	m_stIni.LastJob.sLayerUp = m_sLayer[0];
+	m_stIni.LastJob.sLayerDn = m_sLayer[1];
+	m_stIni.LastJob.sProcessNum = m_sProcessCode;
+	m_stIni.LastJob.sItsCode = m_sItsCode;
+	m_stIni.LastJob.nTestMode = m_nTestMode;
+
+	m_stIni.SaveIni();
+}
+
+
+void CItsConverterDlg::OnBnClickedRadio8()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	SetRadioTestMode(MODE_DUAL);
+}
+
+
+void CItsConverterDlg::OnBnClickedRadio9()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	SetRadioTestMode(MODE_INNER);
+}
+
+
+void CItsConverterDlg::OnBnClickedRadio10()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	SetRadioTestMode(MODE_OUTER);
 }

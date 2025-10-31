@@ -13,6 +13,8 @@
 #include "MsgBox.h"
 
 #define INI_PATH _T("C:\\R2RSet\\ItsConverter.ini")
+enum WORK_MODE { MODE_NONE = -1, MODE_DUAL = 0, MODE_INNER = 1, MODE_OUTER = 2 };
+
 
 struct stLastJob
 {
@@ -26,7 +28,7 @@ struct stLastJob
 		nMachine = -1;
 		sProcessNum = _T("");	sItsCode = _T("");
 		sModel = _T("");	sLot = _T("");	sLayerUp = _T("");	sLayerDn = _T("");
-		nTestMode = -1;
+		nTestMode = MODE_NONE;
 	}
 };
 
@@ -211,19 +213,33 @@ class CItsConverterDlg : public CDialog
 	void RefreshDlg();
 	void SetRadioTestMode(int nIdx);
 
-	int m_nMachine;
+	int m_nMachine, m_nModel, m_nLot, m_nLayer;
 	CString m_sModel, m_sLot, m_sLayer[2], m_sProcessCode, m_sItsCode;
 	int m_nTestMode;
 
 	void Init();
-	void InitModel();
 	void InitTestMode();
 	void InitComboMachine();
+	void InitComboModel();
+	void InitListLot();
+	void InitListLayer();
+	void InitProcessCode();
+	void InitItsCode();
+
+	int GetIdxComboModel(CString sModel);
+	int GetIdxListLot(CString sLot);
+	int GetIdxListLayer(CString sLayer);
+
 	void ModifyModel();
+	void ModifyLot();
+	void ModifyLayer();
 
 	BOOL CheckItsOrigin();
 	int GetItsOriginCase(CString sModel);
 	int GetCurrOriginCase(CString sModel);
+
+	void LoadInfo();
+	void SaveInfo();
 
 // 생성입니다.
 public:
@@ -277,4 +293,8 @@ public:
 	afx_msg void OnSelchangeComboMachine();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedButtonSave();
+	afx_msg void OnBnClickedRadio8();
+	afx_msg void OnBnClickedRadio9();
+	afx_msg void OnBnClickedRadio10();
 };
